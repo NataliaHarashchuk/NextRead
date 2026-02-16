@@ -44,7 +44,6 @@ def read_books(
     skip: int = 0,
     limit: int = 100,
     search: Optional[str] = Query(None, description="Search by title or author"),
-    current_user: Annotated[User, Depends(get_current_user)] = None,
     db: Session = Depends(get_db)
 ):
     """Get list of books"""
@@ -60,7 +59,6 @@ def read_books(
 )
 def read_book(
     book_id: int,
-    current_user: Annotated[User, Depends(get_current_user)] = None,
     db: Session = Depends(get_db)
 ):
     """Get book by ID"""
