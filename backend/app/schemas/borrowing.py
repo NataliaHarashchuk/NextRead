@@ -36,3 +36,5 @@ class Borrowing(BorrowingInDB):
 class BorrowingWithDetails(Borrowing):
     user_username: Optional[str] = None
     book_title: Optional[str] = None
+    book_author: Optional[str] = None
+    book_isbn: Optional[str] = None

@@ -29,6 +29,10 @@ export interface Borrowing {
   created_at: string;
   book?: Book;
   user?: User;
+  user_username?: string,
+  book_title?: string,
+  book_author?: string,
+  book_isbn?: string
 }
 
 export interface LoginRequest {

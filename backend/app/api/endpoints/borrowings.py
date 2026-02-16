@@ -66,7 +66,7 @@ def read_borrowings(
 
 @router.get(
     "/my",
-    response_model=List[Borrowing],
+    response_model=List[BorrowingWithDetails],
     summary="My borrowings",
     description="Get list of borrowings for current user"
 )
