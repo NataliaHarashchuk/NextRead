@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, Outlet } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate, Outlet } from "react-router-dom";
 import {
   AppBar,
   Box,
@@ -19,14 +19,15 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import BookIcon from '@mui/icons-material/Book';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import HomeIcon from '@mui/icons-material/Home';
-import LoginIcon from '@mui/icons-material/Login';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { useAuth } from '@/contexts/AuthContext';
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import BookIcon from "@mui/icons-material/Book";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import HomeIcon from "@mui/icons-material/Home";
+import LoginIcon from "@mui/icons-material/Login";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Layout: React.FC = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -45,7 +46,7 @@ const Layout: React.FC = () => {
   const handleLogout = () => {
     logout();
     handleCloseUserMenu();
-    navigate('/');
+    navigate("/");
   };
 
   const handleDrawerToggle = () => {
@@ -55,7 +56,7 @@ const Layout: React.FC = () => {
   const drawerWidth = 240;
 
   const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
+    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
       <Typography variant="h6" sx={{ my: 2 }}>
         Next Read
       </Typography>
@@ -87,6 +88,16 @@ const Layout: React.FC = () => {
             </ListItemButton>
           </ListItem>
         )}
+        {isAdmin && (
+          <ListItem disablePadding>
+            <ListItemButton component={Link} to="/all-borrowings">
+              <ListItemIcon>
+                <AssignmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="Всі бронювання" />
+            </ListItemButton>
+          </ListItem>
+        )}
         {!isAuthenticated && (
           <>
             <ListItem disablePadding>
@@ -112,11 +123,11 @@ const Layout: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <AppBar position="static">
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            <BookIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
+            <BookIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
             <Typography
               variant="h6"
               noWrap
@@ -124,18 +135,18 @@ const Layout: React.FC = () => {
               to="/"
               sx={{
                 mr: 2,
-                display: { xs: 'none', md: 'flex' },
-                fontFamily: 'monospace',
+                display: { xs: "none", md: "flex" },
+                fontFamily: "monospace",
                 fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
+                letterSpacing: ".3rem",
+                color: "inherit",
+                textDecoration: "none",
               }}
             >
               NEXT READ
             </Typography>
 
-            <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+            <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
               <IconButton
                 size="large"
                 aria-label="menu"
@@ -148,7 +159,7 @@ const Layout: React.FC = () => {
               </IconButton>
             </Box>
 
-            <BookIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
+            <BookIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
             <Typography
               variant="h5"
               noWrap
@@ -156,23 +167,23 @@ const Layout: React.FC = () => {
               to="/"
               sx={{
                 mr: 2,
-                display: { xs: 'flex', md: 'none' },
+                display: { xs: "flex", md: "none" },
                 flexGrow: 1,
-                fontFamily: 'monospace',
+                fontFamily: "monospace",
                 fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
+                letterSpacing: ".3rem",
+                color: "inherit",
+                textDecoration: "none",
               }}
             >
               NEXT READ
             </Typography>
 
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+            <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
               <Button
                 component={Link}
                 to="/books"
-                sx={{ my: 2, color: 'white', display: 'block' }}
+                sx={{ my: 2, color: "white", display: "block" }}
               >
                 Каталог
               </Button>
@@ -180,9 +191,18 @@ const Layout: React.FC = () => {
                 <Button
                   component={Link}
                   to="/my-borrowings"
-                  sx={{ my: 2, color: 'white', display: 'block' }}
+                  sx={{ my: 2, color: "white", display: "block" }}
                 >
                   Мої книги
+                </Button>
+              )}
+              {isAdmin && (
+                <Button
+                  component={Link}
+                  to="/all-borrowings"
+                  sx={{ my: 2, color: "white", display: "block" }}
+                >
+                  Всі бронювання
                 </Button>
               )}
             </Box>
@@ -193,22 +213,24 @@ const Layout: React.FC = () => {
                   <Tooltip title="Налаштування">
                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                       <Avatar alt={user?.full_name || user?.username}>
-                        {(user?.full_name || user?.username)?.charAt(0).toUpperCase()}
+                        {(user?.full_name || user?.username)
+                          ?.charAt(0)
+                          .toUpperCase()}
                       </Avatar>
                     </IconButton>
                   </Tooltip>
                   <Menu
-                    sx={{ mt: '45px' }}
+                    sx={{ mt: "45px" }}
                     id="menu-appbar"
                     anchorEl={anchorElUser}
                     anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
+                      vertical: "top",
+                      horizontal: "right",
                     }}
                     keepMounted
                     transformOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
+                      vertical: "top",
+                      horizontal: "right",
                     }}
                     open={Boolean(anchorElUser)}
                     onClose={handleCloseUserMenu}
@@ -216,7 +238,8 @@ const Layout: React.FC = () => {
                   >
                     <MenuItem disabled>
                       <Typography textAlign="center">
-                        {user?.full_name || user?.username} {isAdmin && '(Адмін)'}
+                        {user?.full_name || user?.username}{" "}
+                        {isAdmin && "(Адмін)"}
                       </Typography>
                     </MenuItem>
                     <Divider />
@@ -226,7 +249,7 @@ const Layout: React.FC = () => {
                   </Menu>
                 </>
               ) : (
-                <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+                <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
                   <Button component={Link} to="/login" color="inherit">
                     Вхід
                   </Button>
@@ -253,8 +276,8 @@ const Layout: React.FC = () => {
           keepMounted: true,
         }}
         sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
         }}
         disableScrollLock={true}
       >
@@ -270,9 +293,9 @@ const Layout: React.FC = () => {
         sx={{
           py: 3,
           px: 2,
-          mt: 'auto',
+          mt: "auto",
           backgroundColor: (theme) =>
-            theme.palette.mode === 'light'
+            theme.palette.mode === "light"
               ? theme.palette.grey[200]
               : theme.palette.grey[800],
         }}

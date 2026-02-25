@@ -8,6 +8,7 @@ import BooksPage from '@/pages/BooksPage';
 import BorrowBookPage from '@/pages/BorrowBookPage';
 import MyBorrowingsPage from '@/pages/MyBorrowingsPage';
 import BookDetailPage from '@/pages/BookDetailPage';
+import AllBorrowingsPage from '@/pages/AllBorrowingsPage';
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
           {
             path: 'my-borrowings',
             element: <MyBorrowingsPage />,
+          },
+          {
+            path: 'all-borrowings',
+            element: <AllBorrowingsPage />,
           },
         ],
       },

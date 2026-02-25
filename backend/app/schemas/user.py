@@ -32,5 +32,15 @@ class UserInDB(UserBase):
         from_attributes = True
 
 
+class UserInBorrowing(BaseModel):
+    id: int
+    username: str
+    email: str
+    full_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
 class User(UserInDB):
     pass

@@ -104,7 +104,7 @@ const MyBorrowingsPage: React.FC = () => {
                     }}
                   >
                     <Typography variant="h6" component="h2">
-                      {borrowing.book_title || 'Невідома книга'}
+                      {borrowing.book?.title || 'Невідома книга'}
                     </Typography>
                     <Chip
                       label={
@@ -120,10 +120,10 @@ const MyBorrowingsPage: React.FC = () => {
                   </Box>
 
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Автор: {borrowing.book_author || 'Невідомо'}
+                    Автор: {borrowing.book?.author || 'Невідомо'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    ISBN: {borrowing.book_isbn || 'Невідомо'}
+                    ISBN: {borrowing.book?.isbn || 'Невідомо'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Дата бронювання:{' '}

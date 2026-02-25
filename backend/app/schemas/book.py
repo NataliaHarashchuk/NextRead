@@ -35,3 +35,16 @@ class BookInDB(BookBase):
 
 class Book(BookInDB):
     pass
+
+
+class BookInBorrowing(BaseModel):
+    id: int
+    title: str
+    author: str
+    isbn: Optional[str] = None
+    published_year: Optional[int] = None
+    quantity: int
+    available: int
+    
+    class Config:
+        from_attributes = True

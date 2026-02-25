@@ -33,8 +33,14 @@ class Borrowing(BorrowingInDB):
     pass
 
 
+from app.schemas.user import UserInBorrowing
+from app.schemas.book import BookInBorrowing
+
+
+class Borrowing(BorrowingInDB):
+    user: UserInBorrowing
+    book: BookInBorrowing
+
+
 class BorrowingWithDetails(Borrowing):
-    user_username: Optional[str] = None
-    book_title: Optional[str] = None
-    book_author: Optional[str] = None
-    book_isbn: Optional[str] = None
+    pass

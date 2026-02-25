@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
 from datetime import date
 from app.models.borrowing import Borrowing, BorrowingStatus
@@ -8,7 +8,10 @@ from app.schemas.borrowing import BorrowingCreate, BorrowingUpdate
 
 def get_borrowing(db: Session, borrowing_id: int) -> Optional[Borrowing]:
     """Get borrowing by ID"""
-    return db.query(Borrowing).filter(Borrowing.id == borrowing_id).first()
+    return db.query(Borrowing).options(
+        joinedload(Borrowing.user),
+        joinedload(Borrowing.book)
+    ).filter(Borrowing.id == borrowing_id).first()
 
 
 def get_borrowings(
@@ -19,7 +22,10 @@ def get_borrowings(
     status: Optional[str] = None
 ) -> List[Borrowing]:
     """Get list of borrowings with filtering"""
-    query = db.query(Borrowing)
+    query = db.query(Borrowing).options(
+        joinedload(Borrowing.user),
+        joinedload(Borrowing.book)
+    )
     
     if user_id:
         query = query.filter(Borrowing.user_id == user_id)
@@ -51,7 +57,9 @@ def create_borrowing(
     db.add(db_borrowing)
     db.commit()
     db.refresh(db_borrowing)
-    return db_borrowing
+    
+    db.refresh(db_borrowing)
+    return get_borrowing(db, db_borrowing.id)
 
 
 def update_borrowing(
@@ -77,7 +85,8 @@ def update_borrowing(
     
     db.commit()
     db.refresh(db_borrowing)
-    return db_borrowing
+    
+    return get_borrowing(db, borrowing_id)
 
 
 def delete_borrowing(db: Session, borrowing_id: int) -> bool:
