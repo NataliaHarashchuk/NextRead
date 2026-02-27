@@ -24,8 +24,3 @@ class Borrowing(Base):
 
     user = relationship("User", back_populates="borrowings")
     book = relationship("Book", back_populates="borrowings")
-
-    book_title = association_proxy("book", "title")
-    book_author = association_proxy("book", "author")
-    book_isbn = association_proxy("book", "isbn")
-    user_username = association_proxy("user", "username")
