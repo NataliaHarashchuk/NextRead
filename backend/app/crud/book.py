@@ -1,3 +1,4 @@
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from app.models.book import Book
@@ -13,24 +14,26 @@ def get_book_by_isbn(db: Session, isbn: str) -> Optional[Book]:
     """Get book by ISBN"""
     return db.query(Book).filter(Book.isbn == isbn).first()
 
-
 def get_books(
     db: Session, 
     skip: int = 0, 
     limit: int = 100,
     search: Optional[str] = None
 ) -> List[Book]:
-    """Get list of books with optional search"""
     query = db.query(Book)
     
     if search:
-        query = query.filter(
-            (Book.title.contains(search)) | 
-            (Book.author.contains(search))
-        )
+        search_terms = search.strip().split()
+        if search_terms:
+            formatted_search = " & ".join([f"{term}:*" for term in search_terms])
+            
+            search_vector = func.to_tsvector('simple', Book.title + ' ' + Book.author)
+            search_query = func.to_tsquery('simple', formatted_search)
+            
+            query = query.filter(search_vector.op('@@')(search_query))
+            query = query.order_by(func.ts_rank(search_vector, search_query).desc())
     
     return query.offset(skip).limit(limit).all()
-
 
 def create_book(db: Session, book: BookCreate) -> Book:
     """Create new book"""

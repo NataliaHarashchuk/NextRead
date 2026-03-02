@@ -1,22 +1,31 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from app.database import engine, Base
 from app.api.endpoints import auth, users, books, borrowings
-from app.models import User, Book, Borrowing
+from app.models import user, book, borrowing
+from app.config import settings
 
-Base.metadata.create_all(bind=engine)
+from migrate_sqlite_to_postgres import migrate_data
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Application is starting...")
+    yield
+    print("Application is shutting down...")
 
 app = FastAPI(
-    title="Library Management System",
+    title=settings.PROJECT_NAME,
     description="""
     ## Library System for Managing Books and Borrowings
     
     ### Features:
     
-    * **Authentication** - user registration and login
+    * **Authentication** - user registration and login with JWT
     * **User Management** - CRUD operations (admin only)
     * **Book Management** - full CRUD for book catalog
     * **Borrowing Management** - borrow and return books
+    * **PostgreSQL Backend** - reliable and scalable database
     
     ### User Roles:
     
@@ -30,12 +39,12 @@ app = FastAPI(
     2. Login via `/auth/login` and get token
     3. Click 'Authorize' button at the top and paste the token
     
-    ### Creating First Admin:
+    ### Database:
     
-    On first run, you need to create an admin manually through the database
-    or change user role after registration.
+    This application uses PostgreSQL for data persistence.
     """,
-    version="1.0.0",
+    version=settings.VERSION,
+    lifespan=lifespan,
     contact={
         "name": "Developer",
         "email": "admin@library.com",
@@ -63,6 +72,7 @@ app = FastAPI(
     ],
 )
 
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -71,6 +81,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Routers
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(books.router)
@@ -86,9 +97,10 @@ app.include_router(borrowings.router)
 def read_root():
     """API root endpoint"""
     return {
-        "message": "Welcome to the Library Management System!",
+        "message": f"Welcome to {settings.PROJECT_NAME}!",
         "docs": "/docs",
-        "version": "1.0.0"
+        "version": settings.VERSION,
+        "database": "PostgreSQL"
     }
 
 
@@ -96,13 +108,34 @@ def read_root():
     "/health",
     tags=["Root"],
     summary="Health check",
-    description="Check server health"
+    description="Check server and database health"
 )
 def health_check():
     """System health check"""
-    return {"status": "healthy"}
+    try:
+        # Перевірка підключення до БД
+        from app.database import SessionLocal
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "version": settings.VERSION
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e)
+        }
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )

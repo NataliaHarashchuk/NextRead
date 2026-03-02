@@ -9,3 +9,6 @@ pydantic==2.9.0
 pydantic-settings==2.4.0
 pydantic[email]
 python-dotenv==1.0.0
+
+alembic==1.12.1
+psycopg[binary]

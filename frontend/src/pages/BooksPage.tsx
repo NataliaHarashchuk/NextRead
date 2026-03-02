@@ -32,7 +32,6 @@ const BooksPage: React.FC = () => {
   const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [books, setBooks] = useState<Book[]>([]);
-  const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,37 +40,26 @@ const BooksPage: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
 
-  const loadBooks = async () => {
+  const loadBooks = async (query?: string) => {
     try {
       setIsLoading(true);
-      const data = await apiService.getBooks();
+      setError('');
+      const data = await apiService.getBooks(query); 
       setBooks(data);
-      setFilteredBooks(data);
     } catch (err: any) {
-      setError('Не вдалося завантажити книги');
+      setError('Не вдалося завантажити книги з сервера');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadBooks();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      loadBooks(searchQuery);
+    }, 500);
 
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredBooks(books);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = books.filter(
-        (book) =>
-          book.title.toLowerCase().includes(query) ||
-          book.author.toLowerCase().includes(query) ||
-          book.isbn?.toLowerCase().includes(query)
-      );
-      setFilteredBooks(filtered);
-    }
-  }, [searchQuery, books]);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
@@ -108,7 +96,7 @@ const BooksPage: React.FC = () => {
 
     try {
       await apiService.deleteBook(bookToDelete.id);
-      await loadBooks();
+      await loadBooks(searchQuery);
       setDeleteConfirmOpen(false);
       setBookToDelete(null);
     } catch (err: any) {
@@ -122,17 +110,9 @@ const BooksPage: React.FC = () => {
   };
 
   const handleBookSaved = () => {
-    loadBooks();
+    loadBooks(searchQuery);
     handleDialogClose();
   };
-
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Box>
@@ -162,7 +142,7 @@ const BooksPage: React.FC = () => {
 
       <TextField
         fullWidth
-        placeholder="Пошук за назвою, автором або ISBN..."
+        placeholder="Пошук ..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         sx={{ mb: 3 }}
@@ -172,6 +152,11 @@ const BooksPage: React.FC = () => {
               <SearchIcon />
             </InputAdornment>
           ),
+          endAdornment: isLoading && (
+            <InputAdornment position="end">
+              <CircularProgress size={20} />
+            </InputAdornment>
+          )
         }}
       />
 
@@ -181,15 +166,15 @@ const BooksPage: React.FC = () => {
         </Alert>
       )}
 
-      {filteredBooks.length === 0 ? (
+      {!isLoading && books.length === 0 ? (
         <Alert severity="info">
           {searchQuery
-            ? 'Книги не знайдено. Спробуйте інший запит.'
+            ? `За запитом "${searchQuery}" нічого не знайдено.`
             : 'Каталог порожній'}
         </Alert>
       ) : (
         <Grid container spacing={3}>
-          {filteredBooks.map((book) => (
+          {books.map((book) => (
             <Grid item xs={12} sm={6} md={4} key={book.id}>
               <Card
                 sx={{
@@ -201,20 +186,13 @@ const BooksPage: React.FC = () => {
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: 6,
-                    '& .book-title': {
-                      color: 'primary.main',
-                    },
+                    '& .book-title': { color: 'primary.main' },
                   },
                 }}
                 onClick={() => navigate(`/books/${book.id}`)}
               >
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6"
-                    component="h2"
-                    gutterBottom
-                    className="book-title"
-                    sx={{ transition: 'color 0.2s' }}
-                  >
+                  <Typography variant="h6" component="h2" gutterBottom className="book-title">
                     {book.title}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -223,20 +201,11 @@ const BooksPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     ISBN: {book.isbn}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Рік видання: {book.published_year}
+                  <Typography variant="body2" color="text.secondary">
+                    Рік: {book.published_year}
                   </Typography>
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Chip
-                      label={`Всього: ${book.quantity}`}
-                      size="small"
-                      color="default"
-                    />
-                    <Chip
-                      label={`Доступно: ${book.available}`}
-                      size="small"
-                      color={book.available > 0 ? 'success' : 'error'}
-                    />
+                  <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                    <Chip label={`Доступно: ${book.available}`} size="small" color={book.available > 0 ? 'success' : 'error'} />
                   </Box>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
@@ -244,34 +213,16 @@ const BooksPage: React.FC = () => {
                     size="small"
                     variant="contained"
                     disabled={book.available === 0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleBorrow(book.id);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); handleBorrow(book.id); }}
                   >
-                    {book.available === 0 ? 'Немає в наявності' : 'Забронювати'}
+                    Забронювати
                   </Button>
                   {isAdmin && (
                     <Box>
-                      <Button
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditBook(book);
-                        }}
-                      >
+                      <Button size="small" startIcon={<EditIcon />} onClick={(e) => { e.stopPropagation(); handleEditBook(book); }}>
                         Змінити
                       </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        startIcon={<DeleteIcon />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(book);
-                        }}
-                      >
+                      <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={(e) => { e.stopPropagation(); handleDeleteClick(book); }}>
                         Видалити
                       </Button>
                     </Box>

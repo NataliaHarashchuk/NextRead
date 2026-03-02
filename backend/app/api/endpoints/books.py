@@ -38,7 +38,7 @@ def create_book(
     "/",
     response_model=List[Book],
     summary="Get list of books",
-    description="Get list of all books with optional search"
+    description="Get list of all books with high-performance PostgreSQL search"
 )
 def read_books(
     skip: int = 0,
@@ -46,10 +46,7 @@ def read_books(
     search: Optional[str] = Query(None, description="Search by title or author"),
     db: Session = Depends(get_db)
 ):
-    """Get list of books"""
-    books = book_crud.get_books(db, skip=skip, limit=limit, search=search)
-    return books
-
+    return book_crud.get_books(db, skip=skip, limit=limit, search=search)
 
 @router.get(
     "/{book_id}",
