@@ -4,6 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg://postgres:password@127.0.0.1:5432/library_db"
+    CORS_ORIGINS: str = "*"
     
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "password"
