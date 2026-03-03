@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -9,6 +9,7 @@ class BookBase(BaseModel):
     isbn: Optional[str] = Field(None, max_length=20)
     published_year: Optional[int] = Field(None, ge=1000, le=2100)
     quantity: int = Field(default=1, ge=1)
+    tags: List[str] = Field(default=[], description="Список тегів книги")
 
 
 class BookCreate(BookBase):
@@ -22,10 +23,11 @@ class BookUpdate(BaseModel):
     published_year: Optional[int] = Field(None, ge=1000, le=2100)
     quantity: Optional[int] = Field(None, ge=0)
     available: Optional[int] = Field(None, ge=0)
+    tags: Optional[List[str]] = Field(None, description="Список тегів книги")
 
 
 class BookInDB(BookBase):
-    id: int
+    id: str
     available: int
     created_at: datetime
 
@@ -38,13 +40,14 @@ class Book(BookInDB):
 
 
 class BookInBorrowing(BaseModel):
-    id: int
+    id: str
     title: str
     author: str
     isbn: Optional[str] = None
     published_year: Optional[int] = None
     quantity: int
     available: int
-    
+    tags: List[str] = []
+
     class Config:
         from_attributes = True

@@ -23,7 +23,7 @@ class UserUpdate(BaseModel):
 
 
 class UserInDB(UserBase):
-    id: int
+    id: str
     role: str
     is_active: bool
     created_at: datetime
@@ -33,11 +33,11 @@ class UserInDB(UserBase):
 
 
 class UserInBorrowing(BaseModel):
-    id: int
+    id: str
     username: str
     email: str
     full_name: Optional[str] = None
-    
+
     class Config:
         from_attributes = True
 

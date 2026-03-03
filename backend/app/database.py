@@ -1,42 +1,30 @@
-from sqlalchemy import create_engine, event
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import QueuePool
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
 from app.config import settings
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    poolclass=QueuePool,
-    pool_size=5,          
-    max_overflow=10,     
-    pool_pre_ping=True,   
-    echo=False,         
-)
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-    expire_on_commit=False  # Для PostgreSQL
-)
-
-Base = declarative_base()
+client: AsyncIOMotorClient | None = None
 
 
-def get_db():
-    """Database session generator"""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def connect_db():
+    """Connect to MongoDB and initialize Beanie ODM"""
+    global client
+    from app.models.user import User
+    from app.models.book import Book
+    from app.models.borrowing import Borrowing
+
+    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    db = client[settings.MONGODB_DB]
+
+    await init_beanie(
+        database=db,
+        document_models=[User, Book, Borrowing]
+    )
+    print(f"Connected to MongoDB: {settings.MONGODB_DB}")
 
 
-@event.listens_for(engine, "connect")
-def set_postgres_pragmas(dbapi_conn, connection_record):
-    """Setting up PostgreSQL when connecting"""
-    cursor = dbapi_conn.cursor()
-    try:
-        cursor.execute("SET timezone='UTC'")
-    finally:
-        cursor.close()
+async def close_db():
+    """Close MongoDB connection"""
+    global client
+    if client:
+        client.close()
+        print("MongoDB connection closed")

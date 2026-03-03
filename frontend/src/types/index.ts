@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   full_name: string | null;
@@ -9,30 +9,31 @@ export interface User {
 }
 
 export interface Book {
-  id: number;
+  id: string;
   title: string;
   author: string;
   isbn: string | null;
   published_year: number | null;
   quantity: number;
   available: number;
+  tags: string[];
   created_at: string;
 }
 
 export interface Borrowing {
-  id: number;
-  user_id: number;
-  book_id: number;
+  id: string;
+  user_id: string;
+  book_id: string;
   borrow_date: string;
   return_date: string | null;
   status: 'borrowed' | 'returned';
   created_at: string;
   book?: Book;
   user?: User;
-  user_username?: string,
-  book_title?: string,
-  book_author?: string,
-  book_isbn?: string
+  user_username?: string;
+  book_title?: string;
+  book_author?: string;
+  book_isbn?: string;
 }
 
 export interface LoginRequest {
@@ -59,6 +60,7 @@ export interface CreateBookRequest {
   isbn?: string | null;
   published_year?: number | null;
   quantity: number;
+  tags?: string[];
 }
 
 export interface UpdateBookRequest {
@@ -68,10 +70,11 @@ export interface UpdateBookRequest {
   published_year?: number | null;
   quantity?: number;
   available?: number;
+  tags?: string[];
 }
 
 export interface CreateBorrowingRequest {
-  book_id: number;
+  book_id: string;
   borrow_date: string;
 }
 

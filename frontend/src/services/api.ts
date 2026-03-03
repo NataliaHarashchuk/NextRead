@@ -65,14 +65,14 @@ class ApiService {
     return response.data;
   }
 
-  // BOOKS
-  async getBooks(search?: string): Promise<Book[]> {
-    const params = search ? { search } : {};
-    const response = await this.api.get<Book[]>("/books/", { params });
+  async getBooks(search?: string, tags?: string[]): Promise<Book[]> {
+    const qs = new URLSearchParams();
+    if (search) qs.append("search", search);
+    if (tags && tags.length > 0) tags.forEach((t) => qs.append("tags", t));
+    const response = await this.api.get<Book[]>(`/books/?${qs.toString()}`);
     return response.data;
   }
-
-  async getBook(id: number): Promise<Book> {
+  async getBook(id: string): Promise<Book> {
     const response = await this.api.get<Book>(`/books/${id}`);
     return response.data;
   }
@@ -82,21 +82,24 @@ class ApiService {
     return response.data;
   }
 
-  async updateBook(id: number, data: UpdateBookRequest): Promise<Book> {
+  async updateBook(id: string, data: UpdateBookRequest): Promise<Book> {
     const response = await this.api.put<Book>(`/books/${id}`, data);
     return response.data;
   }
 
-  async deleteBook(id: number): Promise<void> {
+  async deleteBook(id: string): Promise<void> {
     await this.api.delete(`/books/${id}`);
+  }
+
+  async getAllTags(): Promise<string[]> {
+    const response = await this.api.get<string[]>("/books/tags");
+    return response.data;
   }
 
   // BORROWINGS
   async getAllBorrowings(status?: string): Promise<Borrowing[]> {
     const params = status ? { status } : {};
-    const response = await this.api.get<Borrowing[]>("/borrowings/", {
-      params,
-    });
+    const response = await this.api.get<Borrowing[]>("/borrowings/", { params });
     return response.data;
   }
 
@@ -110,15 +113,12 @@ class ApiService {
     return response.data;
   }
 
-  async updateBorrowing(
-    id: number,
-    data: UpdateBorrowingRequest,
-  ): Promise<Borrowing> {
+  async updateBorrowing(id: string, data: UpdateBorrowingRequest): Promise<Borrowing> {
     const response = await this.api.put<Borrowing>(`/borrowings/${id}`, data);
     return response.data;
   }
 
-  async deleteBorrowing(id: number): Promise<void> {
+  async deleteBorrowing(id: string): Promise<void> {
     await this.api.delete(`/borrowings/${id}`);
   }
 }

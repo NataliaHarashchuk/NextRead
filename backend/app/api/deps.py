@@ -1,54 +1,34 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from typing import Annotated
-from app.database import get_db
+from fastapi.security import OAuth2PasswordBearer
 from app.core.security import decode_access_token
-from app.crud import user as user_crud
 from app.models.user import User
+from app.crud import user as user_crud
 
-security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-    db: Session = Depends(get_db)
-) -> User:
-    """Get current authenticated user"""
-    token = credentials.credentials
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     username = decode_access_token(token)
-    
-    if username is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    user = user_crud.get_user_by_username(db, username=username)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
+    if not username:
+        raise credentials_exception
+
+    user = await user_crud.get_user_by_username(username)
+    if not user:
+        raise credentials_exception
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is deactivated"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is deactivated")
     return user
 
 
-def get_current_admin(
-    current_user: Annotated[User, Depends(get_current_user)]
-) -> User:
-    """Check if current user is admin"""
+async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions. Admin role required."
+            detail="Admin access required"
         )
     return current_user

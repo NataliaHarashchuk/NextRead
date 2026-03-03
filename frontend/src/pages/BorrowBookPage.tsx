@@ -29,7 +29,7 @@ const BorrowBookPage: React.FC = () => {
     const loadBook = async () => {
       try {
         setIsLoading(true);
-        const data = await apiService.getBook(Number(bookId));
+        const data = await apiService.getBook(bookId!);
         setBook(data);
       } catch (err: any) {
         setError('Не вдалося завантажити інформацію про книгу');
@@ -51,7 +51,7 @@ const BorrowBookPage: React.FC = () => {
 
     try {
       await apiService.createBorrowing({
-        book_id: Number(bookId),
+        book_id: bookId!,
         borrow_date: borrowDate,
       });
       setSuccess('Книгу успішно забронировано!');
@@ -76,9 +76,7 @@ const BorrowBookPage: React.FC = () => {
   }
 
   if (!book) {
-    return (
-      <Alert severity="error">Книгу не знайдено</Alert>
-    );
+    return <Alert severity="error">Книгу не знайдено</Alert>;
   }
 
   return (
@@ -89,18 +87,20 @@ const BorrowBookPage: React.FC = () => {
         </Typography>
 
         <Box sx={{ my: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            {book.title}
-          </Typography>
+          <Typography variant="h6" gutterBottom>{book.title}</Typography>
           <Typography variant="body1" color="text.secondary" gutterBottom>
             Автор: {book.author}
           </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            ISBN: {book.isbn}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Рік видання: {book.published_year}
-          </Typography>
+          {book.isbn && (
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              ISBN: {book.isbn}
+            </Typography>
+          )}
+          {book.published_year && (
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Рік видання: {book.published_year}
+            </Typography>
+          )}
           <Box sx={{ mt: 2 }}>
             <Chip
               label={`Доступно: ${book.available} з ${book.quantity}`}
@@ -109,17 +109,8 @@ const BorrowBookPage: React.FC = () => {
           </Box>
         </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        )}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
         {book.available === 0 ? (
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -134,28 +125,14 @@ const BorrowBookPage: React.FC = () => {
               value={borrowDate}
               onChange={(e) => setBorrowDate(e.target.value)}
               sx={{ mb: 3 }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              inputProps={{
-                min: new Date().toISOString().split('T')[0],
-              }}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: new Date().toISOString().split('T')[0] }}
             />
-
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={() => navigate('/books')}
-              >
+              <Button fullWidth variant="outlined" onClick={() => navigate('/books')}>
                 Скасувати
               </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                type="submit"
-                disabled={isSubmitting}
-              >
+              <Button fullWidth variant="contained" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Бронювання...' : 'Забронювати'}
               </Button>
             </Box>

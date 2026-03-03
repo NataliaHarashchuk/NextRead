@@ -1,8 +1,6 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from app.database import Base
-from sqlalchemy.ext.associationproxy import association_proxy
+from beanie import Document, PydanticObjectId
+from typing import Optional
+from datetime import datetime, date
 import enum
 
 
@@ -11,16 +9,13 @@ class BorrowingStatus(str, enum.Enum):
     RETURNED = "returned"
 
 
-class Borrowing(Base):
-    __tablename__ = "borrowings"
+class Borrowing(Document):
+    user_id: PydanticObjectId
+    book_id: PydanticObjectId
+    borrow_date: date
+    return_date: Optional[date] = None
+    status: str = BorrowingStatus.BORROWED
+    created_at: datetime = datetime.utcnow()
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
-    borrow_date = Column(Date, nullable=False)
-    return_date = Column(Date, nullable=True)
-    status = Column(String, default=BorrowingStatus.BORROWED)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="borrowings")
-    book = relationship("Book", back_populates="borrowings")
+    class Settings:
+        name = "borrowings"

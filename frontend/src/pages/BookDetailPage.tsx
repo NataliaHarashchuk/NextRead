@@ -16,6 +16,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Book } from '@/types';
@@ -28,16 +29,14 @@ const BookDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadBook();
-  }, [bookId]);
+  useEffect(() => { loadBook(); }, [bookId]);
 
   const loadBook = async () => {
     try {
       setIsLoading(true);
-      const data = await apiService.getBook(Number(bookId));
+      const data = await apiService.getBook(bookId!);
       setBook(data);
-    } catch (err: any) {
+    } catch {
       setError('Не вдалося завантажити книгу');
     } finally {
       setIsLoading(false);
@@ -45,25 +44,19 @@ const BookDetailPage: React.FC = () => {
   };
 
   const handleBorrow = () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
+    if (!isAuthenticated) { navigate('/login'); return; }
     navigate(`/borrow/${bookId}`);
   };
 
-  const handleEdit = () => {
-    navigate(`/books?edit=${bookId}`);
-  };
+  const handleEdit = () => navigate(`/books?edit=${bookId}`);
 
   const handleDelete = async () => {
     if (!book) return;
-    
     if (window.confirm(`Ви впевнені, що хочете видалити книгу "${book.title}"?`)) {
       try {
         await apiService.deleteBook(book.id);
         navigate('/books');
-      } catch (err: any) {
+      } catch {
         setError('Не вдалося видалити книгу');
       }
     }
@@ -81,11 +74,7 @@ const BookDetailPage: React.FC = () => {
     return (
       <Box>
         <Alert severity="error">{error || 'Книгу не знайдено'}</Alert>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/books')}
-          sx={{ mt: 2 }}
-        >
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/books')} sx={{ mt: 2 }}>
           Повернутися до каталогу
         </Button>
       </Box>
@@ -94,92 +83,79 @@ const BookDetailPage: React.FC = () => {
 
   return (
     <Box>
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/books')}
-        sx={{ mb: 3 }}
-      >
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/books')} sx={{ mb: 3 }}>
         Повернутися до каталогу
       </Button>
 
       <Grid container spacing={4}>
+        {/* ── main info ── */}
         <Grid item xs={12} md={8}>
           <Paper elevation={3} sx={{ p: 4 }}>
-            <Typography variant="h3" component="h1" gutterBottom>
-              {book.title}
-            </Typography>
-
-            <Typography variant="h5" color="text.secondary" gutterBottom>
-              {book.author}
-            </Typography>
+            <Typography variant="h3" component="h1" gutterBottom>{book.title}</Typography>
+            <Typography variant="h5" color="text.secondary" gutterBottom>{book.author}</Typography>
 
             <Divider sx={{ my: 3 }} />
 
             <Grid container spacing={2}>
               {book.isbn && (
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    ISBN
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {book.isbn}
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">ISBN</Typography>
+                  <Typography variant="body1" fontWeight="medium">{book.isbn}</Typography>
                 </Grid>
               )}
-
               {book.published_year && (
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Рік видання
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {book.published_year}
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Рік видання</Typography>
+                  <Typography variant="body1" fontWeight="medium">{book.published_year}</Typography>
                 </Grid>
               )}
-
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Всього примірників
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {book.quantity}
-                </Typography>
+                <Typography variant="body2" color="text.secondary">Всього примірників</Typography>
+                <Typography variant="body1" fontWeight="medium">{book.quantity}</Typography>
               </Grid>
-
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Доступно для бронювання
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {book.available}
-                </Typography>
+                <Typography variant="body2" color="text.secondary">Доступно для бронювання</Typography>
+                <Typography variant="body1" fontWeight="medium">{book.available}</Typography>
               </Grid>
-
               <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary">
-                  Додано до бібліотеки
-                </Typography>
+                <Typography variant="body2" color="text.secondary">Додано до бібліотеки</Typography>
                 <Typography variant="body1" fontWeight="medium">
                   {new Date(book.created_at).toLocaleDateString('uk-UA', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
+                    year: 'numeric', month: 'long', day: 'numeric',
                   })}
                 </Typography>
               </Grid>
             </Grid>
+
+            {/* ── tags ── */}
+            {book.tags && book.tags.length > 0 && (
+              <>
+                <Divider sx={{ my: 3 }} />
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
+                    <LocalOfferIcon fontSize="small" color="action" />
+                    <Typography variant="body2" color="text.secondary">Теги</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    {book.tags.map((tag) => (
+                      <Chip
+                        key={tag} label={tag} size="small"
+                        color="secondary" variant="outlined" clickable
+                        onClick={() => navigate(`/books?tags=${encodeURIComponent(tag)}`)}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              </>
+            )}
           </Paper>
         </Grid>
 
-        {/* Бокова панель з діями */}
+        {/* ── sidebar ── */}
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Статус книги
-              </Typography>
-
+              <Typography variant="h6" gutterBottom>Статус книги</Typography>
               <Box sx={{ mb: 3 }}>
                 <Chip
                   label={book.available > 0 ? 'Доступна' : 'Недоступна'}
@@ -188,13 +164,10 @@ const BookDetailPage: React.FC = () => {
                 />
               </Box>
 
-              {/* Кнопки для користувачів */}
               {!isAdmin && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <Button
-                    variant="contained"
-                    size="large"
-                    fullWidth
+                    variant="contained" size="large" fullWidth
                     disabled={book.available === 0 || !isAuthenticated}
                     onClick={handleBorrow}
                   >
@@ -204,7 +177,6 @@ const BookDetailPage: React.FC = () => {
                       ? 'Немає в наявності'
                       : 'Забронювати книгу'}
                   </Button>
-
                   {!isAuthenticated && (
                     <Typography variant="caption" color="text.secondary" textAlign="center">
                       Для бронювання потрібна авторизація
@@ -213,24 +185,12 @@ const BookDetailPage: React.FC = () => {
                 </Box>
               )}
 
-              {/* Кнопки для адміністратора */}
               {isAdmin && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    startIcon={<EditIcon />}
-                    fullWidth
-                    onClick={handleEdit}
-                  >
+                  <Button variant="contained" startIcon={<EditIcon />} fullWidth onClick={handleEdit}>
                     Редагувати
                   </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    fullWidth
-                    onClick={handleDelete}
-                  >
+                  <Button variant="outlined" color="error" startIcon={<DeleteIcon />} fullWidth onClick={handleDelete}>
                     Видалити книгу
                   </Button>
                 </Box>
@@ -240,11 +200,9 @@ const BookDetailPage: React.FC = () => {
 
           <Card sx={{ mt: 2 }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Про бібліотеку
-              </Typography>
+              <Typography variant="h6" gutterBottom>Про бібліотеку</Typography>
               <Typography variant="body2" color="text.secondary">
-                Next Read - це онлайн система управління бібліотекою. 
+                Next Read — це онлайн система управління бібліотекою.
                 Бронюйте книги онлайн та забирайте їх у зручний для вас час.
               </Typography>
             </CardContent>

@@ -1,8 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, status
 from datetime import timedelta
-from typing import Annotated
-from app.database import get_db
 from app.schemas.auth import Token, LoginRequest
 from app.schemas.user import User, UserCreate
 from app.crud import user as user_crud
@@ -12,6 +9,18 @@ from app.config import settings
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+def _user_to_schema(user) -> dict:
+    return {
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,
+        "is_active": user.is_active,
+        "created_at": user.created_at,
+    }
+
+
 @router.post(
     "/register",
     response_model=User,
@@ -19,26 +28,14 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     summary="Register new user",
     description="Create a new user account in the system"
 )
-def register(
-    user: UserCreate,
-    db: Session = Depends(get_db)
-):
-    """Register new user"""
-    db_user = user_crud.get_user_by_username(db, username=user.username)
-    if db_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists"
-        )
+async def register(user: UserCreate):
+    if await user_crud.get_user_by_username(user.username):
+        raise HTTPException(status_code=400, detail="Username already exists")
+    if await user_crud.get_user_by_email(user.email):
+        raise HTTPException(status_code=400, detail="Email already exists")
 
-    db_user = user_crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already exists"
-        )
-    
-    return user_crud.create_user(db=db, user=user)
+    db_user = await user_crud.create_user(user)
+    return _user_to_schema(db_user)
 
 
 @router.post(
@@ -47,29 +44,18 @@ def register(
     summary="Login",
     description="Authenticate user and get JWT token"
 )
-def login(
-    login_data: LoginRequest,
-    db: Session = Depends(get_db)
-):
-    """Login to the system"""
-    user = user_crud.get_user_by_username(db, username=login_data.username)
-    
+async def login(login_data: LoginRequest):
+    user = await user_crud.get_user_by_username(login_data.username)
+
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is deactivated"
-        )
-    
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is deactivated")
+
+    expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = create_access_token(data={"sub": user.username}, expires_delta=expires)
+    return {"access_token": token, "token_type": "bearer"}

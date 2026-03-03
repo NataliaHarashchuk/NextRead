@@ -1,11 +1,14 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime, date
 from app.models.borrowing import BorrowingStatus
 
+from app.schemas.user import UserInBorrowing
+from app.schemas.book import BookInBorrowing
+
 
 class BorrowingBase(BaseModel):
-    book_id: int
+    book_id: str
     borrow_date: date
 
 
@@ -18,9 +21,11 @@ class BorrowingUpdate(BaseModel):
     status: Optional[BorrowingStatus] = None
 
 
-class BorrowingInDB(BorrowingBase):
-    id: int
-    user_id: int
+class BorrowingInDB(BaseModel):
+    id: str
+    user_id: str
+    book_id: str
+    borrow_date: date
     return_date: Optional[date] = None
     status: str
     created_at: datetime
@@ -29,18 +34,10 @@ class BorrowingInDB(BorrowingBase):
         from_attributes = True
 
 
-class Borrowing(BorrowingInDB):
-    pass
+class BorrowingWithDetails(BorrowingInDB):
+    user: Optional[UserInBorrowing] = None
+    book: Optional[BookInBorrowing] = None
 
 
-from app.schemas.user import UserInBorrowing
-from app.schemas.book import BookInBorrowing
-
-
-class Borrowing(BorrowingInDB):
-    user: UserInBorrowing
-    book: BookInBorrowing
-
-
-class BorrowingWithDetails(Borrowing):
+class Borrowing(BorrowingWithDetails):
     pass
