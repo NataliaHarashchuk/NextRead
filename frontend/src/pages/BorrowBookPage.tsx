@@ -54,7 +54,7 @@ const BorrowBookPage: React.FC = () => {
         book_id: Number(bookId),
         borrow_date: borrowDate,
       });
-      setSuccess('Книгу успішно забронировано!');
+      setSuccess('Книгу успішно заброньвона!');
       setTimeout(() => {
         navigate('/my-borrowings');
       }, 2000);
